@@ -95,24 +95,6 @@
       "owner": "platformio",
       "version": "~1.80400.0"
     },
-    "toolchain-xtensa-esp32": {
-      "type": "toolchain",
-      "optional": true,
-      "owner": "espressif",
-      "version": "8.4.0+2021r1"
-    },
-    "toolchain-xtensa-esp32s2": {
-      "type": "toolchain",
-      "optional": true,
-      "owner": "espressif",
-      "version": "8.4.0+2021r1"
-    },
-    "toolchain-riscv32-esp": {
-      "type": "toolchain",
-      "optional": true,
-      "owner": "espressif",
-      "version": "8.4.0+2021r1"
-    },
     "framework-arduinoespressif32": {
       "type": "framework",
       "optional": true,
