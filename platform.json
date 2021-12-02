@@ -128,7 +128,7 @@
     "tool-esptoolpy": {
       "type": "uploader",
       "owner": "platformio",
-      "version": "~1.30100.0"
+      "version": "https://github.com/tasmota/esptool/releases/download/v3.2/esptool-v3.2.zip"
     },
     "tool-mbctool": {
       "optional": true,
@@ -141,11 +141,10 @@
       "owner": "platformio",
       "version": "~2.1000.0"
     },
-    "tool-mkspiffs": {
+    "tool-mklittlefs": {
       "type": "uploader",
-      "optional": true,
       "owner": "platformio",
-      "version": "~2.230.0"
+      "version": "~1.203.0"
     },
     "tool-cmake": {
       "optional": true,
