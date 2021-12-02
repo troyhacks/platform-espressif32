@@ -99,7 +99,7 @@
       "type": "framework",
       "optional": true,
       "owner": "platformio",
-      "version": "https://github.com/espressif/arduino-esp32.git"
+      "version": "https://github.com/tasmota/arduino-esp32/releases/download/2.0.1.1/framework-arduinoespressif32-release_IDF4.4.tar.gz"
     },
     "framework-arduino-mbcwb": {
       "type": "framework",
@@ -111,8 +111,7 @@
       "type": "framework",
       "optional": true,
       "owner": "platformio",
-      "version": "~3.40300.0",
-      "optionalVersions": ["~3.40001.0"]
+      "version": "https://github.com/espressif/esp-idf.git#release/v4.4"
     },
     "framework-simba": {
       "type": "framework",
