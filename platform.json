@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/platformio/platform-espressif32.git"
+    "url": "https://github.com/tasmota/platform-espressif32.git"
   },
   "version": "3.4.0",
   "frameworks": {
@@ -79,7 +79,7 @@
     "framework-arduinoespressif32": {
       "type": "framework",
       "optional": true,
-      "owner": "platformio",
+      "owner": "tasmota",
       "version": "https://github.com/tasmota/arduino-esp32/releases/download/2.0.1.1/framework-arduinoespressif32-release_IDF4.4.tar.gz"
     },
     "framework-arduino-mbcwb": {
@@ -92,7 +92,7 @@
       "type": "framework",
       "optional": true,
       "owner": "platformio",
-      "version": "https://github.com/espressif/esp-idf.git#release/v4.4"
+      "version": "~3.40301.0"
     },
     "framework-simba": {
       "type": "framework",
@@ -108,7 +108,7 @@
     },
     "tool-esptoolpy": {
       "type": "uploader",
-      "owner": "platformio",
+      "owner": "tasmota",
       "version": "https://github.com/tasmota/esptool/releases/download/v3.2/esptool-v3.2.zip"
     },
     "tool-mbctool": {
