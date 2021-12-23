@@ -18,7 +18,7 @@
     "type": "git",
     "url": "https://github.com/tasmota/platform-espressif32.git"
   },
-  "version": "3.4.1",
+  "version": "2.0.2",
   "frameworks": {
     "arduino": {
       "package": "framework-arduinoespressif32",
@@ -80,7 +80,7 @@
       "type": "framework",
       "optional": true,
       "owner": "tasmota",
-      "version": "https://github.com/tasmota/arduino-esp32/releases/download/2.0.1.1/framework-arduinoespressif32-release_IDF4.4.tar.gz"
+      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/555/framework-arduinoespressif32-release_v4.4-831152548.tar.gz"
     },
     "framework-arduino-mbcwb": {
       "type": "framework",
