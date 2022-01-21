@@ -1,4 +1,4 @@
-# Tasmota Espressif 32: development platform for [PlatformIO](http://platformio.org)
+# Tasmota Espressif 32 solo1: development platform for [PlatformIO](http://platformio.org)
 
 [![Examples](https://github.com/Jason2866/platform-espressif32/actions/workflows/examples.yml/badge.svg)](https://github.com/Jason2866/platform-espressif32/actions/workflows/examples.yml)
 
@@ -16,7 +16,7 @@ Espressif Systems is a privately held fabless semiconductor company. They provid
 
 ```ini
 [env:stable]
-platform = https://github.com/tasmota/platform-espressif32/releases/download/v.2.0.2.1/platform-espressif32-v.2.0.2.1.zip
+platform = https://github.com/tasmota/platform-espressif32/releases/download/v2.0.2.1solo1/platform-espressif32-2.0.2.1solo1.zip
 board = ...
 ...
 ```
