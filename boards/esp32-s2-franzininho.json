@@ -1,7 +1,7 @@
 {
   "build": {
     "arduino":{
-      "ldscript": "esp32s2_out.ld"
+      "ld": "esp32s2_out.ld"
     },
     "core": "esp32",
     "f_cpu": "240000000L",
@@ -11,16 +11,16 @@
     "variant": "esp32s2"
   },
   "connectivity": [
-    "wifi"
+    "arduino",
+    "espidf"
   ],
   "debug": {
     "openocd_target": "esp32s2.cfg"
   },
   "frameworks": [
-    "arduino",
     "espidf"
   ],
-  "name": "Adafruit ESP32-S2 Feather Development Board",
+  "name": "Franzininho WiFi Board",
   "upload": {
     "flash_size": "4MB",
     "maximum_ram_size": 327680,
@@ -28,6 +28,6 @@
     "require_upload_port": true,
     "speed": 460800
   },
-  "url": "https://www.adafruit.com/product/4769",
-  "vendor": "Adafruit"
+  "url": "https://github.com/Franzininho/Franzininho-WIFI",
+  "vendor": "Franzininho"
 }
