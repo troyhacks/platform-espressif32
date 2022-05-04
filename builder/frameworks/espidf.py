@@ -50,14 +50,24 @@ mcu = board.get("build.mcu", "esp32")
 idf_variant = mcu.lower()
 
 FRAMEWORK_DIR = platform.get_package_dir("framework-espidf")
-TOOLCHAIN_DIR = platform.get_package_dir(
-    "toolchain-%s"
-    % (
-        "riscv32-esp"
-        if mcu == "esp32c3"
-        else ("xtensa-%s" % mcu)
+if "darwin" in get_systype() and "arm64" in get_systype():
+    TOOLCHAIN_DIR = platform.get_package_dir(
+        "toolchain-%s"
+        % (
+            "riscv32-esp-arm"
+            if mcu == "esp32c3"
+            else ("xtensa-%s-arm" % mcu)
+        )
     )
-)
+if not "arm64" in get_systype():
+    TOOLCHAIN_DIR = platform.get_package_dir(
+        "toolchain-%s"
+        % (
+            "riscv32-esp"
+            if mcu == "esp32c3"
+            else ("xtensa-%s" % mcu)
+        )
+    )
 
 assert os.path.isdir(FRAMEWORK_DIR)
 assert os.path.isdir(TOOLCHAIN_DIR)
@@ -587,11 +597,8 @@ def generate_project_ld_script(sdk_config, ignore_targets=None):
 def prepare_build_envs(config, default_env):
     build_envs = []
     target_compile_groups = config.get("compileGroups")
-    is_build_type_debug = (
-        set(["debug", "sizedata"]) & set(COMMAND_LINE_TARGETS)
-        or default_env.GetProjectOption("build_type") == "debug"
-    )
 
+    is_build_type_debug = "debug" in env.GetBuildType()
     for cg in target_compile_groups:
         includes = []
         sys_includes = []
