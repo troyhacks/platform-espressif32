@@ -51,15 +51,19 @@ def _get_board_f_flash(env):
 def _get_board_flash_mode(env):
     memory_type = env.BoardConfig().get("build.arduino.memory_type", "qio_qspi")
     mode = env.subst("$BOARD_FLASH_MODE")
-    if mode == "qio" or mode == "qout":
-        return "dio"
-    if memory_type == "opi_opi" or memory_type == "opi_qspi":
+    if memory_type in ("opi_opi", "opi_qspi"):
         return "dout"
+    if mode in ("qio", "qout"):
+        return "dio"
     return mode
 
 
 def _get_board_boot_mode(env):
-    return env.BoardConfig().get("build.boot", "$BOARD_FLASH_MODE")
+    memory_type = env.BoardConfig().get("build.arduino.memory_type", "qio_qspi")
+    build_boot = env.BoardConfig().get("build.boot", "$BOARD_FLASH_MODE")
+    if memory_type in ("opi_opi", "opi_qspi"):
+        build_boot = "opi"
+    return build_boot
 
 
 def _parse_size(value):
