@@ -13,7 +13,7 @@
     ],
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
-    "flash_mode": "qio",
+    "flash_mode": "dout",
     "hwids": [
       [
         "0X303A",
@@ -36,7 +36,7 @@
   ],
   "name": "ESP32S3 CAM LCD",
   "upload": {
-    "flash_size": "4MB",
+    "flash_size": "16MB",
     "maximum_ram_size": 327680,
     "maximum_size": 16777216,
     "require_upload_port": true,
