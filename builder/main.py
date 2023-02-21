@@ -22,10 +22,22 @@ from SCons.Script import (
 
 from platformio.util import get_serial_ports
 
+env = DefaultEnvironment()
+platform = env.PioPlatform()
+
 #
 # Helpers
 #
 
+extra_flags = ''.join([element.replace("-D", " ") for element in env.BoardConfig().get("build.extra_flags", "")])
+build_flags = ''.join([element.replace("-D", " ") for element in env.GetProjectOption("build_flags")])
+
+if "CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags:
+    FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-solo1")
+elif "CORE32ITEAD" in extra_flags or "FRAMEWORK_ARDUINO_ITEAD" in build_flags:
+    FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-ITEAD")
+else:
+    FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
 
 def BeforeUpload(target, source, env):
     upload_options = {}
@@ -42,6 +54,23 @@ def BeforeUpload(target, source, env):
         env.Replace(UPLOAD_PORT=env.WaitForNewSerialPort(before_ports))
 
 
+def _get_board_memory_type(env):
+    board_config = env.BoardConfig()
+    default_type = "%s_%s" % (
+        board_config.get("build.flash_mode", "dio"),
+        board_config.get("build.psram_type", "qspi"),
+    )
+
+    return board_config.get(
+        "build.memory_type",
+        board_config.get(
+            "build.%s.memory_type"
+            % env.subst("$PIOFRAMEWORK").strip().replace(" ", "_"),
+            default_type,
+        ),
+    )
+
+
 def _get_board_f_flash(env):
     frequency = env.subst("$BOARD_F_FLASH")
     frequency = str(frequency).replace("L", "")
@@ -49,17 +78,20 @@ def _get_board_f_flash(env):
 
 
 def _get_board_flash_mode(env):
-    memory_type = env.BoardConfig().get("build.arduino.memory_type", "qio_qspi")
-    mode = env.subst("$BOARD_FLASH_MODE")
-    if memory_type in ("opi_opi", "opi_qspi"):
+    if _get_board_memory_type(env) in (
+        "opi_opi",
+        "opi_qspi",
+    ):
         return "dout"
+
+    mode = env.subst("$BOARD_FLASH_MODE")
     if mode in ("qio", "qout"):
         return "dio"
     return mode
 
 
 def _get_board_boot_mode(env):
-    memory_type = env.BoardConfig().get("build.arduino.memory_type", "qio_qspi")
+    memory_type = env.BoardConfig().get("build.arduino.memory_type", "")
     build_boot = env.BoardConfig().get("build.boot", "$BOARD_FLASH_MODE")
     if memory_type in ("opi_opi", "opi_qspi"):
         build_boot = "opi"
@@ -89,7 +121,7 @@ def _parse_partitions(env):
 
     result = []
     next_offset = 0
-    bound = 0x10000 # default value
+    bound = int(board.get("upload.offset_address", "0x10000"), 16) # default 0x10000
     with open(partitions_csv) as fp:
         for line in fp.readlines():
             line = line.strip()
@@ -108,13 +140,13 @@ def _parse_partitions(env):
             }
             result.append(partition)
             next_offset = _parse_size(partition["offset"])
-            #print("App start from .csv:", hex(next_offset))
-            #print("Partition subtype from .csv:", partition["subtype"])
             if (partition["subtype"] == "ota_0"):
                 bound = next_offset
             next_offset = (next_offset + bound - 1) & ~(bound - 1)
-            #print("Main Firmware will be flashed to:", hex(bound))
-    env["ESP32_APP_OFFSET"] = hex(bound)
+    # Configure application partition offset
+    env.Replace(ESP32_APP_OFFSET=str(hex(bound)))
+    # Propagate application offset to debug configurations
+    env["INTEGRATION_EXTRA_DATA"].update({"application_offset": str(hex(bound))})
     return result
 
 
@@ -167,8 +199,6 @@ def __fetch_fs_size(target, source, env):
     return (target, source)
 
 
-env = DefaultEnvironment()
-platform = env.PioPlatform()
 board = env.BoardConfig()
 mcu = board.get("build.mcu", "esp32")
 toolchain_arch = "xtensa-%s" % mcu
@@ -183,14 +213,14 @@ env.Replace(
     __get_board_boot_mode=_get_board_boot_mode,
     __get_board_f_flash=_get_board_f_flash,
     __get_board_flash_mode=_get_board_flash_mode,
+    __get_board_memory_type=_get_board_memory_type,
 
     AR="%s-elf-gcc-ar" % toolchain_arch,
     AS="%s-elf-as" % toolchain_arch,
     CC="%s-elf-gcc" % toolchain_arch,
     CXX="%s-elf-g++" % toolchain_arch,
     GDB="%s-elf-gdb" % toolchain_arch,
-    OBJCOPY=join(
-        platform.get_package_dir("tool-esptoolpy") or "", "esptool.py"),
+    OBJCOPY=join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py"),
     RANLIB="%s-elf-gcc-ranlib" % toolchain_arch,
     SIZETOOL="%s-elf-size" % toolchain_arch,
 
@@ -227,6 +257,8 @@ env.Replace(
         "ESP32_FS_IMAGE_NAME", env.get("ESP32_SPIFFS_IMAGE_NAME", filesystem)
     ),
 
+    ESP32_APP_OFFSET=env.get("INTEGRATION_EXTRA_DATA").get("application_offset"),
+
     PROGSUFFIX=".elf"
 )
 
@@ -241,7 +273,7 @@ env.Append(
                 '"$PYTHONEXE" "$OBJCOPY"',
                 "--chip", mcu, "elf2image",
                 "--dont-append-digest",
-                "--flash_mode", "$BOARD_FLASH_MODE",
+                "--flash_mode", "${__get_board_flash_mode(__env__)}",
                 "--flash_freq", "${__get_board_f_flash(__env__)}",
                 "--flash_size", board.get("upload.flash_size", "4MB"),
                 "-o", "$TARGET", "$SOURCES"
@@ -356,9 +388,7 @@ if upload_protocol == "espota":
             "See https://docs.platformio.org/page/platforms/"
             "espressif32.html#over-the-air-ota-update\n")
     env.Replace(
-        UPLOADER=join(
-            platform.get_package_dir("framework-arduinoespressif32") or "",
-            "tools", "espota.py"),
+        UPLOADER=join(FRAMEWORK_DIR,"tools", "espota.py"),
         UPLOADERFLAGS=["--debug", "--progress", "-i", "$UPLOAD_PORT"],
         UPLOADCMD='"$PYTHONEXE" "$UPLOADER" $UPLOADERFLAGS -f $SOURCE'
     )
@@ -409,34 +439,8 @@ elif upload_protocol == "esptool":
     ]
 
 
-elif upload_protocol == "mbctool":
-    env.Replace(
-        UPLOADER=join(
-            platform.get_package_dir("tool-mbctool") or "", "bin", "mbctool"),
-        UPLOADERFLAGS=[
-            "--device", "esp",
-            "--speed", "$UPLOAD_SPEED",
-            "--port", '"$UPLOAD_PORT"',
-            "--upload",
-            "0x1000", join(
-                platform.get_package_dir("framework-arduino-mbcwb"),
-                "tools", "sdk", "bin", "bootloader_qio_80m.bin"),
-            "0x8000", join("$BUILD_DIR", "partitions.bin"),
-            "0xe000", join(
-                platform.get_package_dir("framework-arduino-mbcwb"),
-                "tools", "partitions", "boot_app0.bin"),
-            "0x10000", join("$BUILD_DIR", "${PROGNAME}.bin"),
-        ],
-        UPLOADCMD='"$UPLOADER" $UPLOADERFLAGS'
-    )
-    upload_actions = [
-        env.VerboseAction(env.AutodetectUploadPort,
-                          "Looking for upload port..."),
-        env.VerboseAction("$UPLOADCMD", "Uploading $SOURCE")
-    ]
-
-
 elif upload_protocol in debug_tools:
+    _parse_partitions(env)
     openocd_args = ["-d%d" % (2 if int(ARGUMENTS.get("PIOVERBOSE", 0)) else 1)]
     openocd_args.extend(
         debug_tools.get(upload_protocol).get("server").get("arguments", []))
@@ -447,9 +451,7 @@ elif upload_protocol in debug_tools:
             % (
                 "$FS_START"
                 if "uploadfs" in COMMAND_LINE_TARGETS
-                else board.get(
-                    "upload.offset_address", "$ESP32_APP_OFFSET"
-                )
+                else env.get("INTEGRATION_EXTRA_DATA").get("application_offset")
             ),
         ]
     )
@@ -490,6 +492,21 @@ env.AddPlatformTarget(
     "uploadfsota", target_firm, upload_actions, "Upload Filesystem Image OTA")
 
 #
+# Target: Erase Flash and Upload
+#
+
+env.AddPlatformTarget(
+    "erase_upload",
+    target_firm,
+    [
+        env.VerboseAction(env.AutodetectUploadPort, "Looking for serial port..."),
+        env.VerboseAction("$ERASECMD", "Erasing..."),
+        env.VerboseAction("$UPLOADCMD", "Uploading $SOURCE")
+    ],
+    "Erase Flash and Upload",
+)
+
+#
 # Target: Erase Flash
 #
 
@@ -502,14 +519,6 @@ env.AddPlatformTarget(
     ],
     "Erase Flash",
 )
-
-#
-# Information about obsolete method of specifying linker scripts
-#
-
-if any("-Wl,-T" in f for f in env.get("LINKFLAGS", [])):
-    print("Warning! '-Wl,-T' option for specifying linker scripts is deprecated. "
-          "Please use 'board_build.ldscript' option in your 'platformio.ini' file.")
 
 #
 # Default targets
