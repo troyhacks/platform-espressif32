@@ -36,7 +36,7 @@
       "type": "framework",
       "optional": true,
       "owner": "tasmota",
-      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/1242/framework-arduinoespressif32-release_v4.4-f1b808c0aa.zip"
+      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/1266/framework-arduinoespressif32-lwip_timeout-ed6742e7f0.zip"
     },
      "framework-arduino-solo1": {
       "type": "framework",
