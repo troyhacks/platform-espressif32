@@ -77,6 +77,7 @@ def install_python_deps():
         return result
 
     deps = {
+        "wheel": ">=0.35.1",
         "zopfli": ">=0.2.2",
         "esp-idf-size": ">=0.3.0"
     }
