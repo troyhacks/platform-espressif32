@@ -79,7 +79,8 @@ def install_python_deps():
     deps = {
         "wheel": ">=0.35.1",
         "zopfli": ">=0.2.2",
-        "esp-idf-size": ">=0.3.0"
+        "esp-idf-size": ">=0.3.0",
+        "tasmota-metrics": ">=0.3.2"
     }
 
     installed_packages = _get_installed_pip_packages()
