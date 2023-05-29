@@ -1094,6 +1094,8 @@ def install_python_deps():
         return result
 
     deps = {
+        # https://github.com/platformio/platformio-core/issues/4614
+        "urllib3": "<2",
         # https://github.com/platformio/platform-espressif32/issues/635
         "wheel": ">=0.35.1",
         "cryptography": ">=2.1.4,<35.0.0",
