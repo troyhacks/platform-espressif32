@@ -1,72 +1,107 @@
 /*
-   Simple BLE5 multi advertising example on esp32 C3/S3
-   only ESP_BLE_GAP_SET_EXT_ADV_PROP_NONCONN_NONSCANNABLE_UNDIRECTED can be used for periodic advertising
+   BLE5 extended scan example for esp32 C3 and S3
+   with this code it is simple to scan legacy (BLE4) compatible advertising,
+   and BLE5 extended advertising. New coded added in BLEScan is not changing old behavior,
+   which can be used with old esp32, but is adding functionality to use on C3/S3.
+   With this new API advertised device wont be stored in API, it is now user responsibility
 
    author: chegewara
 */
-
+#ifndef CONFIG_BT_BLE_50_FEATURES_SUPPORTED
+#warning "Not compatible hardware"
+#else
 #include <BLEDevice.h>
-#include <BLEAdvertising.h>
+#include <BLEUtils.h>
+#include <BLEScan.h>
 
+BLEScan *pBLEScan;
+static bool periodic_sync = false;
 
-esp_ble_gap_ext_adv_params_t ext_adv_params_2M = {
-    .type = ESP_BLE_GAP_SET_EXT_ADV_PROP_NONCONN_NONSCANNABLE_UNDIRECTED,
-    .interval_min = 0x40,
-    .interval_max = 0x40,
-    .channel_map = ADV_CHNL_ALL,
-    .own_addr_type = BLE_ADDR_TYPE_RANDOM,
-    .filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY,
-    .primary_phy = ESP_BLE_GAP_PHY_1M,
-    .max_skip = 0,
-    .secondary_phy = ESP_BLE_GAP_PHY_2M,
-    .sid = 1,
-    .scan_req_notif = false,
+static esp_ble_gap_periodic_adv_sync_params_t periodic_adv_sync_params = {
+    .filter_policy = 0,
+    .sid = 0,
+    .addr_type = BLE_ADDR_TYPE_RANDOM,
+    .skip = 10,
+    .sync_timeout = 1000, // timeout: 1000 * 10ms
 };
 
-static uint8_t raw_scan_rsp_data_2m[] = {
-        0x02, 0x01, 0x06,
-        0x02, 0x0a, 0xeb,
-        0x12, 0x09, 'E', 'S', 'P', '_', 'M', 'U', 'L', 'T', 'I', '_', 'A',
-        'D', 'V', '_', '2', 'M', 0X0
+class MyBLEExtAdvertisingCallbacks : public BLEExtAdvertisingCallbacks
+{
+  void onResult(esp_ble_gap_ext_adv_reprot_t params)
+  {
+    uint8_t *adv_name = NULL;
+    uint8_t adv_name_len = 0;
+    adv_name = esp_ble_resolve_adv_data(params.adv_data, ESP_BLE_AD_TYPE_NAME_CMPL, &adv_name_len);
+    if ((adv_name != NULL) && (memcmp(adv_name, "ESP_MULTI_ADV_2M", adv_name_len) == 0) && !periodic_sync)
+    {
+      periodic_sync = true;
+      char adv_temp_name[60] = {'0'};
+      memcpy(adv_temp_name, adv_name, adv_name_len);
+      log_i("Start create sync with the peer device %s", adv_temp_name);
+      periodic_adv_sync_params.sid = params.sid;
+      //          periodic_adv_sync_params.addr_type = params.addr_type;
+      memcpy(periodic_adv_sync_params.addr, params.addr, sizeof(esp_bd_addr_t));
+      esp_ble_gap_periodic_adv_create_sync(&periodic_adv_sync_params);
+    }
+  }
 };
 
-static esp_ble_gap_periodic_adv_params_t periodic_adv_params = {
-    .interval_min = 0x320, // 1000 ms interval
-    .interval_max = 0x640,
-    .properties = 0, // Do not include TX power
+class MyPeriodicScan : public BLEPeriodicScanCallbacks
+{
+  // void onCreateSync(esp_bt_status_t status){}
+  // void onCancelSync(esp_bt_status_t status){}
+  // void onTerminateSync(esp_bt_status_t status){}
+
+  void onStop(esp_bt_status_t status)
+  {
+    log_i("ESP_GAP_BLE_EXT_SCAN_STOP_COMPLETE_EVT");
+    periodic_sync = false;
+    pBLEScan->startExtScan(0, 0); // scan duration in n * 10ms, period - repeat after n seconds (period >= duration)
+  }
+
+  void onLostSync(uint16_t sync_handle)
+  {
+    log_i("ESP_GAP_BLE_PERIODIC_ADV_SYNC_LOST_EVT");
+    esp_ble_gap_stop_ext_scan();
+  }
+
+  void onSync(esp_ble_periodic_adv_sync_estab_param_t params)
+  {
+    log_i("ESP_GAP_BLE_PERIODIC_ADV_SYNC_ESTAB_EVT, status %d", params.status);
+    // esp_log_buffer_hex("sync addr", param->periodic_adv_sync_estab.adv_addr, 6);
+    log_i("sync handle %d sid %d perioic adv interval %d adv phy %d", params.sync_handle,
+          params.sid,
+          params.period_adv_interval,
+          params.adv_phy);
+  }
+
+  void onReport(esp_ble_gap_periodic_adv_report_t params)
+  {
+    log_i("periodic adv report, sync handle %d data status %d data len %d rssi %d", params.sync_handle,
+          params.data_status,
+          params.data_length,
+          params.rssi);
+  }
 };
 
-static uint8_t periodic_adv_raw_data[] = {
-        0x02, 0x01, 0x06,
-        0x02, 0x0a, 0xeb,
-        0x03, 0x03, 0xab, 0xcd,
-        0x11, 0x09, 'E', 'S', 'P', '_', 'P', 'E', 'R', 'I', 'O', 'D', 'I',
-        'C', '_', 'A', 'D', 'V'
-};
-
-
-uint8_t addr_2m[6] = {0xc0, 0xde, 0x52, 0x00, 0x00, 0x02};
-
-BLEMultiAdvertising advert(1); // max number of advertisement data 
-
-void setup() {
+void setup()
+{
   Serial.begin(115200);
-  Serial.println("Multi-Advertising...");
+  Serial.println("Periodic scan...");
 
   BLEDevice::init("");
+  pBLEScan = BLEDevice::getScan(); //create new scan
+  pBLEScan->setExtendedScanCallback(new MyBLEExtAdvertisingCallbacks());
+  pBLEScan->setExtScanParams(); // use with pre-defined/default values, overloaded function allows to pass parameters
+  pBLEScan->setPeriodicScanCallback(new MyPeriodicScan());
+  delay(100);                         // it is just for simplicity this example, to let ble stack to set extended scan params
+  pBLEScan->startExtScan(0, 0);
 
-  advert.setAdvertisingParams(0, &ext_adv_params_2M);
-  advert.setAdvertisingData(0, sizeof(raw_scan_rsp_data_2m), &raw_scan_rsp_data_2m[0]);
-  advert.setInstanceAddress(0, addr_2m);
-  advert.setDuration(0, 0, 0);
-
-  delay(100);
-  advert.start();
-  advert.setPeriodicAdvertisingParams(0, &periodic_adv_params);
-  advert.setPeriodicAdvertisingData(0, sizeof(periodic_adv_raw_data), &periodic_adv_raw_data[0]);
-  advert.startPeriodicAdvertising(0);
 }
 
-void loop() {
+void loop()
+{
   delay(2000);
 }
+
+#endif // CONFIG_BT_BLE_50_FEATURES_SUPPORTED
