@@ -57,6 +57,12 @@ class Espressif32Platform(PlatformBase):
         if os.path.isdir("ulp"):
             self.packages["toolchain-esp32ulp"]["optional"] = False
 
+        # Currently only Arduino Nano ESP32 uses the dfuutil tool as uploader
+        if variables.get("board") == "arduino_nano_esp32":
+            self.packages["tool-dfuutil-arduino"]["optional"] = False
+        else:
+            del self.packages["tool-dfuutil-arduino"]
+
         if "espidf" in frameworks:
             # Common packages for IDF and mixed Arduino+IDF projects
             self.packages["toolchain-esp32ulp"]["optional"] = False
@@ -184,6 +190,10 @@ class Espressif32Platform(PlatformBase):
                 "onboard": link in debug.get("onboard_tools", []),
                 "default": link == debug.get("default_tool"),
             }
+
+            # Avoid erasing Arduino Nano bootloader by preloading app binary
+            if board.id == "arduino_nano_esp32":
+                debug["tools"][link]["load_cmds"] = "preload"
 
         board.manifest["debug"] = debug
         return board
