@@ -6,7 +6,7 @@
     },
     "core": "esp32",
     "extra_flags": [
-      "-DARDUINO_M5Stack_ATOMS3",
+      "-DARDUINO_M5Stack_StampS3",
       "-DARDUINO_USB_MODE=1",
       "-DARDUINO_RUNNING_CORE=1",
       "-DARDUINO_EVENT_RUNNING_CORE=1"
@@ -21,7 +21,7 @@
       ]
     ],
     "mcu": "esp32s3",
-    "variant": "m5stack_atoms3"
+    "variant": "m5stack_stamp_s3"
   },
   "connectivity": [
     "wifi"
@@ -33,7 +33,7 @@
     "arduino",
     "espidf"
   ],
-  "name": "M5Stack AtomS3",
+  "name": "M5Stack StampS3",
   "upload": {
     "flash_size": "8MB",
     "maximum_ram_size": 327680,
@@ -41,6 +41,6 @@
     "require_upload_port": true,
     "speed": 460800
   },
-  "url": "https://docs.m5stack.com/en/core/AtomS3",
+  "url": "https://docs.m5stack.com/en/core/StampS3",
   "vendor": "M5Stack"
 }
