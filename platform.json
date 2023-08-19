@@ -12,24 +12,20 @@
     "RISC-V"
   ],
   "engines": {
-    "platformio": ">=6.0.2"
+    "platformio": ">=6.1.9"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/tasmota/platform-espressif32.git"
   },
-  "version": "2.0.3",
+  "version": "2023.07.01",
   "frameworks": {
     "arduino": {
-      "package": "framework-arduinoespressif32",
       "script": "builder/frameworks/arduino.py"
     },
     "espidf": {
       "package": "framework-espidf",
-      "script": "builder/frameworks/espidf.py",
-      "description": "ESP-IDF is the official development framework for the ESP32 and ESP32-S Series SoCs.",
-      "homepage": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32/",
-      "title": "Espressif IoT Development Framework"
+      "script": "builder/frameworks/espidf.py"
     }
   },
   "packages": {
@@ -37,95 +33,71 @@
       "type": "framework",
       "optional": true,
       "owner": "tasmota",
-      "version": "https://github.com/tasmota/arduino-esp32/releases/download/2.0.3/framework-arduinoespressif32-203.tar.gz"
+      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/1432/framework-arduinoespressif32-release_v4.4-16f8b1bb34.zip"
+    },
+     "framework-arduino-solo1": {
+      "type": "framework",
+      "optional": true,
+      "owner": "tasmota",
+      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/1434/framework-arduinoespressif32-solo1-release_v4.4-16f8b1bb34.zip"
+    },
+     "framework-arduino-ITEAD": {
+      "type": "framework",
+      "optional": true,
+      "owner": "tasmota",
+      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/1433/framework-arduinoespressif32-ITEAD-release_v4.4-16f8b1bb34.zip"
     },
     "framework-espidf": {
       "type": "framework",
       "optional": true,
-      "owner": "tasmota",
-      "version": "https://github.com/tasmota/esp-idf/releases/download/v4.4.1/esp-idf-v4.4.1.zip"
+      "owner": "platformio",
+      "version": "https://github.com/tasmota/esp-idf/releases/download/v5.0.2/esp-idf-v5.0.2.zip",
+      "optionalVersions": "https://github.com/tasmota/esp-idf/releases/download/v4.4.5.20230614/esp-idf-v4.4.5.zip"
     },
     "toolchain-xtensa-esp32": {
       "type": "toolchain",
       "optional": true,
       "owner": "espressif",
-      "version": "8.4.0+2021r2-patch3"
+      "version": "8.4.0+2021r2-patch5",
+      "optionalVersions": ["11.2.0+2022r1"]
     },
     "toolchain-xtensa-esp32s2": {
       "type": "toolchain",
       "optional": true,
       "owner": "espressif",
-      "version": "8.4.0+2021r2-patch3"
+      "version": "8.4.0+2021r2-patch5",
+      "optionalVersions": ["11.2.0+2022r1"]
     },
     "toolchain-xtensa-esp32s3": {
       "type": "toolchain",
       "optional": true,
       "owner": "espressif",
-      "version": "8.4.0+2021r2-patch3"
+      "version": "8.4.0+2021r2-patch5",
+      "optionalVersions": ["11.2.0+2022r1"]
     },
     "toolchain-riscv32-esp": {
       "type": "toolchain",
       "optional": true,
       "owner": "espressif",
-      "version": "8.4.0+2021r2-patch3"
-    },
-    "toolchain-xtensa-esp32-arm": {
-      "type": "toolchain",
-      "optional": true,
-      "owner": "tasmota",
-      "version": "https://github.com/Jason2866/crosstool-NG/releases/download/8.4.0/toolchain-xtensa-esp32.tar.gz"
-    },
-    "toolchain-xtensa-esp32s2-arm": {
-      "type": "toolchain",
-      "optional": true,
-      "owner": "tasmota",
-      "version": "https://github.com/Jason2866/crosstool-NG/releases/download/8.4.0/toolchain-xtensa-esp32s2.tar.gz"
-    },
-    "toolchain-xtensa-esp32s3-arm": {
-      "type": "toolchain",
-      "optional": true,
-      "owner": "tasmota",
-      "version": "https://github.com/Jason2866/crosstool-NG/releases/download/8.4.0/toolchain-xtensa-esp32s3.tar.gz"
-    },
-    "toolchain-riscv32-esp-arm": {
-      "type": "toolchain",
-      "optional": true,
-      "owner": "tasmota",
-      "version": "https://github.com/Jason2866/crosstool-NG/releases/download/8.4.0/toolchain-riscv32-esp.tar.gz"
-    },
-    "tool-openocd-esp32-arm": {
-      "type": "debugger",
-      "optional": true,
-      "owner": "tasmota",
-      "version": "https://github.com/Jason2866/openocd-esp32/releases/download/v0.11.0-esp32-20220404/openocd-esp32-macos-arm64-0.11.0-esp32-20220424.zip"
+      "version": "8.4.0+2021r2-patch5",
+      "optionalVersions": ["11.2.0+2022r1"]
     },
     "toolchain-esp32ulp": {
       "type": "toolchain",
       "optional": true,
       "owner": "platformio",
-      "version": "~1.22851.0"
-    },
-    "toolchain-esp32s2ulp": {
-      "type": "toolchain",
-      "optional": true,
-      "owner": "platformio",
-      "version": "~1.22851.0"
-    },
-    "framework-arduino-mbcwb": {
-      "type": "framework",
-      "optional": true,
-      "owner": "meteca",
-      "version": ">=2.1.1"
+      "version": "~1.23500.0"
     },
     "tool-esptoolpy": {
       "type": "uploader",
       "owner": "tasmota",
-      "version": "https://github.com/tasmota/esptool/releases/download/v3.3.1/esptool-3.3.1.zip"
+      "version": "https://github.com/tasmota/esptool/releases/download/v4.6.2/esptool-4.6.2.zip"
     },
-    "tool-mbctool": {
+    "tool-dfuutil-arduino": {
+      "type": "uploader",
       "optional": true,
-      "owner": "meteca",
-      "version": ">=2.0.0"
+      "owner": "platformio",
+      "version": "~1.11.0"
     },
     "tool-openocd-esp32": {
       "type": "debugger",
@@ -152,7 +124,7 @@
     "tool-cmake": {
       "optional": true,
       "owner": "platformio",
-      "version": "~3.16.0"
+      "version": "~3.21.0"
     },
     "tool-ninja": {
       "optional": true,
