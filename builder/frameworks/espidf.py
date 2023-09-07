@@ -612,6 +612,7 @@ def prepare_build_envs(config, default_env, debug_allowed=True):
     if not target_compile_groups:
         print("Warning! The `%s` component doesn't register any source files. "
             "Check if sources are set in component's CMakeLists.txt!" % config["name"]
+        )
 
     is_build_type_debug = "debug" in env.GetBuildType() and debug_allowed
     for cg in target_compile_groups:
