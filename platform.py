@@ -37,12 +37,13 @@ class Espressif32Platform(PlatformBase):
         core_variant_build = (''.join(variables.get("build_flags", []))).replace("-D", " ")
         frameworks = variables.get("pioframework", [])
 
-        if "CORE32SOLO1" in core_variant_board or "FRAMEWORK_ARDUINO_SOLO1" in core_variant_build:
-            self.packages["framework-arduino-solo1"]["optional"] = False
-        elif "CORE32ITEAD" in core_variant_board or "FRAMEWORK_ARDUINO_ITEAD" in core_variant_build:
-            self.packages["framework-arduino-ITEAD"]["optional"] = False
-        else:
-            self.packages["framework-arduinoespressif32"]["optional"] = False
+        if "arduino" in frameworks:
+            if "CORE32SOLO1" in core_variant_board or "FRAMEWORK_ARDUINO_SOLO1" in core_variant_build:
+                self.packages["framework-arduino-solo1"]["optional"] = False
+            elif "CORE32ITEAD" in core_variant_board or "FRAMEWORK_ARDUINO_ITEAD" in core_variant_build:
+                self.packages["framework-arduino-ITEAD"]["optional"] = False
+            else:
+                self.packages["framework-arduinoespressif32"]["optional"] = False
 
         if "buildfs" in targets:
             filesystem = variables.get("board_build.filesystem", "spiffs")
@@ -74,15 +75,6 @@ class Espressif32Platform(PlatformBase):
                     self.packages[p]["optional"] = False
                 elif p in ("tool-mconf", "tool-idf") and IS_WINDOWS:
                     self.packages[p]["optional"] = False
-
-                # Use the latest toolchains available for IDF v5.1
-                for target in (
-                    "xtensa-esp32",
-                    "xtensa-esp32s2",
-                    "xtensa-esp32s3",
-                    "riscv32-esp"
-                ):
-                    self.packages["toolchain-%s" % target]["version"] = "12.2.0+20230208"
 
         for available_mcu in ("esp32", "esp32s2", "esp32s3"):
             if available_mcu == mcu:
@@ -133,7 +125,7 @@ class Espressif32Platform(PlatformBase):
             "tumpa",
         ]
 
-        if board.get("build.mcu", "") in ("esp32c2", "esp32c3", "esp32c6", "esp32s3", "esp32h2"):
+        if board.get("build.mcu", "") in ("esp32c3", "esp32c6", "esp32s3", "esp32h2"):
             supported_debug_tools.append("esp-builtin")
 
         upload_protocol = board.manifest.get("upload", {}).get("protocol")
