@@ -46,7 +46,7 @@ class Espressif32Platform(PlatformBase):
                 self.packages["framework-arduinoespressif32"]["optional"] = False
 
         if "buildfs" in targets:
-            filesystem = variables.get("board_build.filesystem", "spiffs")
+            filesystem = variables.get("board_build.filesystem", "littlefs")
             if filesystem == "littlefs":
                 self.packages["tool-mklittlefs"]["optional"] = False
             elif filesystem == "fatfs":
