@@ -64,6 +64,12 @@ class Espressif32Platform(PlatformBase):
         else:
             del self.packages["tool-dfuutil-arduino"]
 
+        if "downloadfs" in targets:
+            filesystem = variables.get("board_build.filesystem", "littlefs")
+            if filesystem == "littlefs":
+                # Use Tasmota mklittlefs v4.0.0 to unpack, older version is incompatible
+                self.packages["tool-mklittlefs"]["version"] = "~4.0.0"
+
         if "espidf" in frameworks:
             # Common packages for IDF and mixed Arduino+IDF projects
             self.packages["toolchain-esp32ulp"]["optional"] = False
