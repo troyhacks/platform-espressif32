@@ -86,7 +86,7 @@
     "tool-esptoolpy": {
       "type": "uploader",
       "owner": "tasmota",
-      "version": "https://github.com/tasmota/esptool/releases/download/v4.7.0-dev2/esptool-4.7.0.zip"
+      "version": "https://github.com/tasmota/esptool/releases/download/v4.7.0/esptool-4.7.0.zip"
     },
     "tool-dfuutil-arduino": {
       "type": "uploader",
@@ -102,6 +102,7 @@
     },
     "tool-mkspiffs": {
       "type": "uploader",
+      "optional": true,
       "owner": "platformio",
       "version": "~2.230.0"
     },

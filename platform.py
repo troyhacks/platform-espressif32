@@ -37,15 +37,16 @@ class Espressif32Platform(PlatformBase):
         core_variant_build = (''.join(variables.get("build_flags", []))).replace("-D", " ")
         frameworks = variables.get("pioframework", [])
 
-        if "CORE32SOLO1" in core_variant_board or "FRAMEWORK_ARDUINO_SOLO1" in core_variant_build:
-            self.packages["framework-arduino-solo1"]["optional"] = False
-        elif "CORE32ITEAD" in core_variant_board or "FRAMEWORK_ARDUINO_ITEAD" in core_variant_build:
-            self.packages["framework-arduino-ITEAD"]["optional"] = False
-        else:
-            self.packages["framework-arduinoespressif32"]["optional"] = False
+        if "arduino" in frameworks:
+            if "CORE32SOLO1" in core_variant_board or "FRAMEWORK_ARDUINO_SOLO1" in core_variant_build:
+                self.packages["framework-arduino-solo1"]["optional"] = False
+            elif "CORE32ITEAD" in core_variant_board or "FRAMEWORK_ARDUINO_ITEAD" in core_variant_build:
+                self.packages["framework-arduino-ITEAD"]["optional"] = False
+            else:
+                self.packages["framework-arduinoespressif32"]["optional"] = False
 
         if "buildfs" in targets:
-            filesystem = variables.get("board_build.filesystem", "spiffs")
+            filesystem = variables.get("board_build.filesystem", "littlefs")
             if filesystem == "littlefs":
                 self.packages["tool-mklittlefs"]["optional"] = False
             elif filesystem == "fatfs":
@@ -62,6 +63,12 @@ class Espressif32Platform(PlatformBase):
             self.packages["tool-dfuutil-arduino"]["optional"] = False
         else:
             del self.packages["tool-dfuutil-arduino"]
+
+        if "downloadfs" in targets:
+            filesystem = variables.get("board_build.filesystem", "littlefs")
+            if filesystem == "littlefs":
+                # Use Tasmota mklittlefs v4.0.0 to unpack, older version is incompatible
+                self.packages["tool-mklittlefs"]["version"] = "~4.0.0"
 
         if "espidf" in frameworks:
             # Common packages for IDF and mixed Arduino+IDF projects
