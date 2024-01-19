@@ -202,7 +202,7 @@ def __fetch_fs_size(target, source, env):
 board = env.BoardConfig()
 mcu = board.get("build.mcu", "esp32")
 toolchain_arch = "xtensa-%s" % mcu
-filesystem = board.get("build.filesystem", "spiffs")
+filesystem = board.get("build.filesystem", "littlefs")
 if mcu == "esp32c3":
     toolchain_arch = "riscv32-esp"
 
@@ -237,20 +237,8 @@ env.Replace(
     ],
     ERASECMD='"$PYTHONEXE" "$OBJCOPY" $ERASEFLAGS erase_flash',
 
-    # mkspiffs package contains two different binaries for IDF and Arduino
-    MKFSTOOL="mk%s" % filesystem
-    + (
-        (
-            "_${PIOPLATFORM}_"
-            + (
-                "espidf"
-                if "espidf" in env.subst("$PIOFRAMEWORK")
-                else "${PIOFRAMEWORK}"
-            )
-        )
-        if filesystem == "spiffs"
-        else ""
-    ),
+    MKFSTOOL="mk%s" % filesystem,
+    
     # Legacy `ESP32_SPIFFS_IMAGE_NAME` is used as the second fallback value for
     # backward compatibility
     ESP32_FS_IMAGE_NAME=env.get(
@@ -291,7 +279,7 @@ env.Append(
                             "-b",
                             "$FS_BLOCK",
                         ]
-                        if filesystem in ("spiffs", "littlefs")
+                        if filesystem in ("littlefs")
                         else []
                     )
                     + ["$TARGET"]
@@ -344,9 +332,6 @@ if env.get("PIOMAINPROG"):
         env.VerboseAction(
             lambda source, target, env: _update_max_upload_size(env),
             "Retrieving maximum program size $SOURCES"))
-# remove after PIO Core 3.6 release
-elif set(["checkprogsize", "upload"]) & set(COMMAND_LINE_TARGETS):
-    _update_max_upload_size(env)
 
 #
 # Target: Print binary size
@@ -410,7 +395,6 @@ elif upload_protocol == "esptool":
             "--flash_mode", "${__get_board_flash_mode(__env__)}",
             "--flash_freq", "${__get_board_f_flash(__env__)}",
             "--flash_size", "detect"
-            #"--flash_size", board.get("upload.flash_size", "detect")
         ],
         UPLOADCMD='"$PYTHONEXE" "$UPLOADER" $UPLOADERFLAGS $ESP32_APP_OFFSET $SOURCE'
     )
@@ -429,7 +413,6 @@ elif upload_protocol == "esptool":
                 "--flash_mode", "${__get_board_flash_mode(__env__)}",
                 "--flash_freq", "${__get_board_f_flash(__env__)}",
                 "--flash_size", "detect",
-                #"--flash_size", board.get("upload.flash_size", "detect"),
                 "$FS_START"
             ],
             UPLOADCMD='"$PYTHONEXE" "$UPLOADER" $UPLOADERFLAGS $SOURCE',
