@@ -78,14 +78,14 @@ class Espressif32Platform(PlatformBase):
                 # launch a GDB server in pipe mode while v11 works fine
                 self.packages[gdb_package]["version"] = "~11.2.0"
 
-            # Common packages for IDF and mixed Arduino+IDF projects
-            if "espidf" in frameworks:
-                self.packages["toolchain-esp32ulp"]["optional"] = False
-                for p in self.packages:
-                    if p in ("tool-cmake", "tool-ninja"):
-                        self.packages[p]["optional"] = False
-                    elif p in ("tool-mconf", "tool-idf") and IS_WINDOWS:
-                        self.packages[p]["optional"] = False
+        # Common packages for IDF and mixed Arduino+IDF projects
+        if "espidf" in frameworks:
+            self.packages["toolchain-esp32ulp"]["optional"] = False
+            for p in self.packages:
+                if p in ("tool-cmake", "tool-ninja"):
+                    self.packages[p]["optional"] = False
+                elif p in ("tool-mconf", "tool-idf") and IS_WINDOWS:
+                    self.packages[p]["optional"] = False
 
         for available_mcu in ("esp32", "esp32s2", "esp32s3"):
             if available_mcu == mcu:
@@ -212,6 +212,11 @@ class Espressif32Platform(PlatformBase):
     def configure_debug_session(self, debug_config):
         build_extra_data = debug_config.build_data.get("extra", {})
         flash_images = build_extra_data.get("flash_images", [])
+
+        if "openocd" in (debug_config.server or {}).get("executable", ""):
+            debug_config.server["arguments"].extend(
+                ["-c", "adapter speed %s" % (debug_config.speed or "5000")]
+            )
 
         ignore_conds = [
             debug_config.load_cmds != ["load"],
