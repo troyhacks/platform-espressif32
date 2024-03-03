@@ -33,19 +33,19 @@
       "type": "framework",
       "optional": true,
       "owner": "tasmota",
-      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/2106/framework-arduinoespressif32-release_v4.4-e280c0b.zip"
+      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/2130/framework-arduinoespressif32-release_v4.4-626a990.zip"
     },
      "framework-arduino-solo1": {
       "type": "framework",
       "optional": true,
       "owner": "tasmota",
-      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/2108/framework-arduinoespressif32-solo1-release_v4.4-e280c0b.zip"
+      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/2132/framework-arduinoespressif32-solo1-release_v4.4-626a990.zip"
     },
      "framework-arduino-ITEAD": {
       "type": "framework",
       "optional": true,
       "owner": "tasmota",
-      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/2107/framework-arduinoespressif32-ITEAD-release_v4.4-e280c0b.zip"
+      "version": "https://github.com/Jason2866/esp32-arduino-lib-builder/releases/download/2131/framework-arduinoespressif32-ITEAD-release_v4.4-626a990.zip"
     },
     "framework-espidf": {
       "type": "framework",
