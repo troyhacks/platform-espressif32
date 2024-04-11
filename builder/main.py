@@ -70,11 +70,29 @@ def _get_board_memory_type(env):
         ),
     )
 
+def _normalize_frequency(frequency):
+    frequency = str(frequency).replace("L", "")
+    return str(int(int(frequency) / 1000000)) + "m"
+
 
 def _get_board_f_flash(env):
     frequency = env.subst("$BOARD_F_FLASH")
-    frequency = str(frequency).replace("L", "")
-    return str(int(int(frequency) / 1000000)) + "m"
+    return _normalize_frequency(frequency)
+
+
+def _get_board_f_image(env):
+    board_config = env.BoardConfig()
+    if "build.f_image" in board_config:
+        return _normalize_frequency(board_config.get("build.f_image"))
+
+    return _get_board_f_flash(env)
+
+def _get_board_f_boot(env):
+    board_config = env.BoardConfig()
+    if "build.f_boot" in board_config:
+        return _normalize_frequency(board_config.get("build.f_boot"))
+
+    return _get_board_f_flash(env)
 
 
 def _get_board_flash_mode(env):
@@ -212,6 +230,8 @@ if "INTEGRATION_EXTRA_DATA" not in env:
 env.Replace(
     __get_board_boot_mode=_get_board_boot_mode,
     __get_board_f_flash=_get_board_f_flash,
+    __get_board_f_image=_get_board_f_image,
+    __get_board_f_boot=_get_board_f_boot,
     __get_board_flash_mode=_get_board_flash_mode,
     __get_board_memory_type=_get_board_memory_type,
 
@@ -238,7 +258,7 @@ env.Replace(
     ERASECMD='"$PYTHONEXE" "$OBJCOPY" $ERASEFLAGS erase_flash',
 
     MKFSTOOL="mk%s" % filesystem,
-    
+
     # Legacy `ESP32_SPIFFS_IMAGE_NAME` is used as the second fallback value for
     # backward compatibility
     ESP32_FS_IMAGE_NAME=env.get(
@@ -260,9 +280,8 @@ env.Append(
             action=env.VerboseAction(" ".join([
                 '"$PYTHONEXE" "$OBJCOPY"',
                 "--chip", mcu, "elf2image",
-                "--dont-append-digest",
                 "--flash_mode", "${__get_board_flash_mode(__env__)}",
-                "--flash_freq", "${__get_board_f_flash(__env__)}",
+                "--flash_freq", "${__get_board_f_image(__env__)}",
                 "--flash_size", board.get("upload.flash_size", "4MB"),
                 "-o", "$TARGET", "$SOURCES"
             ]), "Building $TARGET"),
@@ -393,7 +412,7 @@ elif upload_protocol == "esptool":
             "--after", board.get("upload.after_reset", "hard_reset"),
             "write_flash", "-z",
             "--flash_mode", "${__get_board_flash_mode(__env__)}",
-            "--flash_freq", "${__get_board_f_flash(__env__)}",
+            "--flash_freq", "${__get_board_f_image(__env__)}",
             "--flash_size", "detect"
         ],
         UPLOADCMD='"$PYTHONEXE" "$UPLOADER" $UPLOADERFLAGS $ESP32_APP_OFFSET $SOURCE'
@@ -411,7 +430,7 @@ elif upload_protocol == "esptool":
                 "--after", board.get("upload.after_reset", "hard_reset"),
                 "write_flash", "-z",
                 "--flash_mode", "${__get_board_flash_mode(__env__)}",
-                "--flash_freq", "${__get_board_f_flash(__env__)}",
+                "--flash_freq", "${__get_board_f_image(__env__)}",
                 "--flash_size", "detect",
                 "$FS_START"
             ],
@@ -424,7 +443,6 @@ elif upload_protocol == "esptool":
     ]
 
 elif upload_protocol == "dfu":
-    # C:\Users\ROOT\AppData\Local\Arduino15\packages\arduino\tools\dfu-util\0.11.0-arduino5/dfu-util --device 0x2341:0x0070 -D C:\Users\ROOT\AppData\Local\Temp\arduino_build_789426/sketch_jul31a.ino.bin -Q
 
     hwids = board.get("build.hwids", [["0x2341", "0x0070"]])
     vid = hwids[0][0]
@@ -453,6 +471,8 @@ elif upload_protocol in debug_tools:
         debug_tools.get(upload_protocol).get("server").get("arguments", []))
     openocd_args.extend(
         [
+            "-c",
+            "adapter speed %s" % env.GetProjectOption("debug_speed", "5000"),
             "-c",
             "program_esp {{$SOURCE}} %s verify"
             % (
@@ -506,7 +526,7 @@ env.AddPlatformTarget(
     "erase_upload",
     target_firm,
     [
-        env.VerboseAction(env.AutodetectUploadPort, "Looking for serial port..."),
+        env.VerboseAction(BeforeUpload, "Looking for upload port..."),
         env.VerboseAction("$ERASECMD", "Erasing..."),
         env.VerboseAction("$UPLOADCMD", "Uploading $SOURCE")
     ],
@@ -521,7 +541,7 @@ env.AddPlatformTarget(
     "erase",
     None,
     [
-        env.VerboseAction(env.AutodetectUploadPort, "Looking for serial port..."),
+        env.VerboseAction(BeforeUpload, "Looking for upload port..."),
         env.VerboseAction("$ERASECMD", "Erasing...")
     ],
     "Erase Flash",
