@@ -26,6 +26,7 @@ import subprocess
 import sys
 import shutil
 import os
+import platform as sys_platform
 
 import click
 import semantic_version
@@ -36,7 +37,7 @@ from SCons.Script import (
     DefaultEnvironment,
 )
 
-from platformio import fs
+from platformio import fs, __version__
 from platformio.compat import IS_WINDOWS
 from platformio.proc import exec_command
 from platformio.builder.tools.piolib import ProjectAsLibBuilder
@@ -68,6 +69,15 @@ TOOLCHAIN_DIR = platform.get_package_dir(
 assert os.path.isdir(FRAMEWORK_DIR)
 assert os.path.isdir(TOOLCHAIN_DIR)
 
+# The latest IDF uses a standalone GDB package which requires at least PlatformIO 6.1.11
+if (
+    ["espidf"] == env.get("PIOFRAMEWORK")
+    and semantic_version.Version.coerce(__version__)
+    <= semantic_version.Version("6.1.10")
+    and "__debug" in COMMAND_LINE_TARGETS
+):
+    print("Warning! Debugging an IDF project requires PlatformIO Core >= 6.1.11!")
+
 # Arduino framework as a component is not compatible with ESP-IDF >=4.1
 if "arduino" in env.subst("$PIOFRAMEWORK"):
     ARDUINO_FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
@@ -86,8 +96,8 @@ PROJECT_DIR = env.subst("$PROJECT_DIR")
 PROJECT_SRC_DIR = env.subst("$PROJECT_SRC_DIR")
 CMAKE_API_REPLY_PATH = os.path.join(".cmake", "api", "v1", "reply")
 SDKCONFIG_PATH = os.path.expandvars(board.get(
-    "build.esp-idf.sdkconfig_path",
-    os.path.join(PROJECT_DIR, "sdkconfig.%s" % env.subst("$PIOENV")),
+        "build.esp-idf.sdkconfig_path",
+        os.path.join(PROJECT_DIR, "sdkconfig.%s" % env.subst("$PIOENV")),
 ))
 
 
@@ -350,7 +360,7 @@ def extract_link_args(target_config):
         args = click.parser.split_arg_string(fragment)
         if fragment_role == "flags":
             link_args["LINKFLAGS"].extend(args)
-        elif fragment_role == "libraries":
+        elif fragment_role in ("libraries", "libraryPath"):
             if fragment.startswith("-l"):
                 link_args["LIBS"].extend(args)
             elif fragment.startswith("-L"):
@@ -362,8 +372,8 @@ def extract_link_args(target_config):
             elif fragment.endswith(".a"):
                 archive_path = fragment
                 # process static archives
-                if archive_path.startswith(FRAMEWORK_DIR):
-                    # In case of precompiled archives from framework package
+                if os.path.isabs(archive_path):
+                    # In case of precompiled archives
                     _add_archive(archive_path, link_args)
                 else:
                     # In case of archives within project
@@ -420,7 +430,7 @@ def get_app_flags(app_config, default_config):
 
     # Flags are sorted because CMake randomly populates build flags in code model
     return {
-        "ASFLAGS": sorted(app_flags.get("ASM", default_flags.get("ASM"))),
+        "ASPPFLAGS": sorted(app_flags.get("ASM", default_flags.get("ASM"))),
         "CFLAGS": sorted(app_flags.get("C", default_flags.get("C"))),
         "CXXFLAGS": sorted(app_flags.get("CXX", default_flags.get("CXX"))),
     }
@@ -638,7 +648,7 @@ def prepare_build_envs(config, default_env, debug_allowed=True):
                 parsed_flags = build_env.ParseFlags(build_flags)
                 build_env.AppendUnique(**parsed_flags)
                 if cg.get("language", "") == "ASM":
-                    build_env.AppendUnique(ASFLAGS=parsed_flags.get("CCFLAGS", []))
+                    build_env.AppendUnique(ASPPFLAGS=parsed_flags.get("CCFLAGS", []))
         build_env.AppendUnique(CPPDEFINES=defines, CPPPATH=includes)
         if sys_includes:
             build_env.Append(CCFLAGS=[("-isystem", inc) for inc in sys_includes])
@@ -670,7 +680,7 @@ def compile_source_files(
                 src_path = os.path.join(project_src_dir, src_path)
 
             obj_path = os.path.join("$BUILD_DIR", prepend_dir or "")
-            if src_path.startswith(components_dir):
+            if src_path.lower().startswith(components_dir.lower()):
                 obj_path = os.path.join(
                     obj_path, os.path.relpath(src_path, components_dir)
                 )
@@ -1099,6 +1109,10 @@ def install_python_deps():
 
         return result
 
+    skip_python_packages = os.path.join(FRAMEWORK_DIR, ".pio_skip_pypackages")
+    if os.path.isfile(skip_python_packages):
+        return
+
     deps = {
         "wheel": ">=0.35.1",
         # https://github.com/platformio/platformio-core/issues/4614
@@ -1106,11 +1120,14 @@ def install_python_deps():
         # https://github.com/platformio/platform-espressif32/issues/635
         "cryptography": "~=41.0.1" if IDF5 else ">=2.1.4,<35.0.0",
         "future": ">=0.18.3",
-        "pyparsing": "~=3.0.9" if IDF5 else ">=2.0.3,<2.4.0",
-        "esp-idf-kconfig": "~=1.1.0",
+        "pyparsing": ">=3.1.0,<4" if IDF5 else ">=2.0.3,<2.4.0",
         "kconfiglib": "~=14.1.0" if IDF5 else "~=13.7.1",
-        "idf-component-manager": "~=1.2.3" if IDF5 else "~=1.0",
+        "idf-component-manager": "~=1.5.2" if IDF5 else "~=1.0",
+        "esp-idf-kconfig": ">=1.4.2,<2.0.0"
     }
+
+    if sys_platform.system() == "Darwin" and "arm" in sys_platform.machine().lower():
+        deps["chardet"] = ">=3.0.2,<4"
 
     python_exe_path = get_python_exe()
     installed_packages = _get_installed_pip_packages(python_exe_path)
@@ -1153,6 +1170,7 @@ def install_python_deps():
                 )
             )
 
+
 def get_idf_venv_dir():
     # The name of the IDF venv contains the IDF version to avoid possible conflicts and
     # unnecessary reinstallation of Python dependencies in cases when Arduino
@@ -1162,6 +1180,7 @@ def get_idf_venv_dir():
     return os.path.join(
         env.subst("$PROJECT_CORE_DIR"), "penv", ".espidf-" + idf_version
     )
+
 
 def ensure_python_venv_available():
 
@@ -1197,14 +1216,13 @@ def ensure_python_venv_available():
         env.Execute(
             env.VerboseAction(
                 '"$PYTHONEXE" -m venv --clear "%s"' % venv_dir,
-            "Creating a new virtual environment for IDF Python dependencies",
+                "Creating a new virtual environment for IDF Python dependencies",
             )
         )
 
         assert os.path.isfile(
             pip_path
         ), "Error: Failed to create a proper virtual environment. Missing the `pip` binary!"
-
 
     venv_dir = get_idf_venv_dir()
     venv_data_file = os.path.join(venv_dir, "pio-idf-venv.json")
@@ -1547,7 +1565,7 @@ if "__test" not in COMMAND_LINE_TARGETS or env.GetProjectOption(
     # Add include dirs from PlatformIO build system to project CPPPATH so
     # they're visible to PIOBUILDFILES
     project_env.AppendUnique(
-        CPPPATH=["$PROJECT_INCLUDE_DIR", "$PROJECT_SRC_DIR"]
+        CPPPATH=["$PROJECT_INCLUDE_DIR", "$PROJECT_SRC_DIR", "$PROJECT_DIR"]
         + get_project_lib_includes(env)
     )
 
@@ -1568,12 +1586,43 @@ if sdk_config.get("MBEDTLS_CERTIFICATE_BUNDLE", False):
     generate_mbedtls_bundle(sdk_config)
 
 #
+# Check if flash size is set correctly in the IDF configuration file
+#
+
+board_flash_size = board.get("upload.flash_size", "4MB")
+idf_flash_size = sdk_config.get("ESPTOOLPY_FLASHSIZE", "4MB")
+if board_flash_size != idf_flash_size:
+    print(
+        "Warning! Flash memory size mismatch detected. Expected %s, found %s!"
+        % (board_flash_size, idf_flash_size)
+    )
+    print(
+        "Please select a proper value in your `sdkconfig.defaults` "
+        "or via the `menuconfig` target!"
+    )
+
+#
 # To embed firmware checksum a special argument for esptool.py is required
 #
 
+extra_elf2bin_flags = "--elf-sha256-offset 0xb0"
+# https://github.com/espressif/esp-idf/blob/master/components/esptool_py/project_include.cmake#L58
+# For chips that support configurable MMU page size feature
+# If page size is configured to values other than the default "64KB" in menuconfig,
+mmu_page_size = "64KB"
+if sdk_config.get("SOC_MMU_PAGE_SIZE_CONFIGURABLE", False):
+    if board_flash_size == "2MB":
+        mmu_page_size = "32KB"
+    elif board_flash_size == "1MB":
+        mmu_page_size = "16KB"
+
+if mmu_page_size != "64KB":
+    extra_elf2bin_flags += " --flash-mmu-page-size %s" % mmu_page_size
+
 action = copy.deepcopy(env["BUILDERS"]["ElfToBin"].action)
+
 action.cmd_list = env["BUILDERS"]["ElfToBin"].action.cmd_list.replace(
-    "-o", "--elf-sha256-offset 0xb0 -o"
+    "-o", extra_elf2bin_flags + " -o"
 )
 env["BUILDERS"]["ElfToBin"].action = action
 
