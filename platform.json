@@ -18,7 +18,7 @@
     "type": "git",
     "url": "https://github.com/tasmota/platform-espressif32.git"
   },
-  "version": "2024.07.11",
+  "version": "2024.08.10",
   "frameworks": {
     "arduino": {
       "script": "builder/frameworks/arduino.py"
@@ -33,25 +33,25 @@
       "type": "framework",
       "optional": true,
       "owner": "tasmota",
-      "version": "https://github.com/tasmota/arduino-esp32/releases/download/3.0.2.240712/framework-arduinoespressif32.zip"
+      "version": "https://github.com/tasmota/arduino-esp32/releases/download/3.0.4.240802/framework-arduinoespressif32.zip"
     },
      "framework-arduino-solo1": {
       "type": "framework",
       "optional": true,
       "owner": "tasmota",
-      "version": "https://github.com/tasmota/arduino-esp32/releases/download/3.0.2.240712/framework-arduinoespressif32-solo1.zip"
+      "version": "https://github.com/tasmota/arduino-esp32/releases/download/3.0.4.240802/framework-arduinoespressif32-solo1.zip"
     },
      "framework-arduino-ITEAD": {
       "type": "framework",
       "optional": true,
       "owner": "tasmota",
-      "version": "https://github.com/tasmota/arduino-esp32/releases/download/3.0.2.240712/framework-arduinoespressif32-ITEAD.zip"
+      "version": "https://github.com/tasmota/arduino-esp32/releases/download/3.0.4.240802/framework-arduinoespressif32-ITEAD.zip"
     },
     "framework-espidf": {
       "type": "framework",
       "optional": true,
       "owner": "tasmota",
-      "version": "https://github.com/tasmota/esp-idf/releases/download/v5.1.4.240629/esp-idf-v5.1.4.zip"
+      "version": "https://github.com/tasmota/esp-idf/releases/download/v5.1.4.240801/esp-idf-v5.1.4.zip"
     },
     "toolchain-xtensa-esp32": {
       "type": "toolchain",
@@ -98,7 +98,7 @@
     "tool-esptoolpy": {
       "type": "uploader",
       "owner": "tasmota",
-      "version": "https://github.com/tasmota/esptool/releases/download/v4.7.4/esptool.zip"
+      "version": "https://github.com/tasmota/esptool/releases/download/v4.7.6/esptool.zip"
     },
     "tool-dfuutil-arduino": {
       "type": "uploader",
@@ -132,16 +132,6 @@
       "optional": true,
       "owner": "platformio",
       "version": "^1.7.0"
-    },
-    "tool-mconf": {
-      "optional": true,
-      "owner": "platformio",
-      "version": "~1.4060000.0"
-    },
-    "tool-idf": {
-      "optional": true,
-      "owner": "platformio",
-      "version": "~1.0.1"
     }
   }
 }
