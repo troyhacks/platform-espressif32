@@ -7,6 +7,10 @@
       "mcu": "esp32p4",
       "variant": "esp32p4"
     },
+    "arduino": {
+      "memory_type": "qio_opi",
+      "partitions": "default_16MB.csv"
+    },
     "connectivity": [
       "bluetooth",
       "wifi"
