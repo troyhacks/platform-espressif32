@@ -75,7 +75,7 @@
       "type": "toolchain",
       "optional": true,
       "owner": "espressif",
-      "version": "14.2.0+20240906"
+      "version": "12.2.0+20230208"
     },
     "toolchain-esp32ulp": {
       "type": "toolchain",
